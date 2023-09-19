@@ -271,8 +271,8 @@ def lambda_handler(event, context):
     body = event['body']
     print('body: ', body)
 
-    global modelId, llm, vectorstore, isReady, map, qa
-    global enableConversationMode, enableReference, enableRAG  # debug
+    global modelId, llm, vectorstore, isReady, map
+    global enableReference  # debug
     
     # memory for conversation
     if userId in map:
