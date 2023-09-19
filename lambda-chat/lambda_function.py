@@ -55,9 +55,19 @@ boto3_bedrock = boto3.client(
     region_name=bedrock_region,
 )
 
-parameters = {
-    "max_tokens_to_sample":1024,
-}
+def get_parameter(modelId):
+    if modelId == 'amazon.titan-tg1-large': 
+        return {
+            "maxTokenCount":1024,
+            "stopSequences":[],
+            "temperature":0,
+            "topP":0.9
+        }
+    elif modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+        return {
+            "max_tokens_to_sample":1024,
+        }
+parameters = get_parameter(modelId)
 HUMAN_PROMPT = "\n\nHuman:"
 AI_PROMPT = "\n\nAssistant:"
 
