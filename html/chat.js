@@ -42,7 +42,12 @@ var maxMsgItems = 200;
 var msgHistory = new HashMap();
 var callee = "John";
 var index=0;
-var userId = uuidv4();
+
+var userId = localStorage.getItem('userId'); // set userID if exists 
+if(userId=="") {
+    userId = uuidv4();
+}
+console.log('userId: ', userId);
 
 for (i=0;i<maxMsgItems;i++) {
     msglist.push(document.getElementById('msgLog'+i));
