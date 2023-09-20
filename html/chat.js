@@ -43,7 +43,6 @@ var msgHistory = new HashMap();
 var callee = "John";
 var index=0;
 var userId = uuidv4();
-var requestId;
 
 for (i=0;i<maxMsgItems;i++) {
     msglist.push(document.getElementById('msgLog'+i));
@@ -55,9 +54,6 @@ for (i=0;i<maxMsgItems;i++) {
             else i = index + maxMsgItems;
 
             console.log('click! index: '+index);
-
-            console.log('requestId: ', requestId);  
-            console.log('userId: ', userId);  
         })
     })(i);
 }
@@ -69,7 +65,7 @@ index = 0;
 
 addNotifyMessage("start chat with Amazon Bedrock");
 
-addReceivedMessage("Amazon Bedrock을 이용하여 주셔서 감사합니다. 원하는 질문을 입력하세요. 아래의 파일 버튼을 선택해 TXT, PDF, CSV 문서를 올리면 좀더 향상된 대화(RAG)를 하실 수 있습니다.")
+addReceivedMessage("Amazon Bedrock을 이용하여 주셔서 감사합니다. 원하는 질문을 입력하세요. 아래의 파일 버튼을 선택해 TXT, PDF, CSV 문서를 올리면 요약(Summarization)을 하실 수 있습니다.")
 
 // Listeners
 message.addEventListener('keyup', function(e){
@@ -121,8 +117,23 @@ function addSentMessage(text) {
     var timestr = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
     index++;
 
-    msglist[index].innerHTML = 
-        `<div class="chat-sender chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;   
+    var length = text.length;
+    if(length < 10) {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender20 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;   
+    }
+    else if(length < 30) {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender40 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;
+    }  
+    else if(length < 150) {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender60 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;
+    }  
+    else {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender80 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;
+    } 
 
     sendRequest(text);    
 }       
@@ -134,8 +145,15 @@ function addSentMessageForSummary(text) {
     var timestr = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
     index++;
 
-    msglist[index].innerHTML = 
-        `<div class="chat-sender chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;   
+    var length = text.length;
+    if(length < 100) {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender60 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;   
+    }
+    else {
+        msglist[index].innerHTML = 
+            `<div class="chat-sender80 chat-sender--right"><h1>${timestr}</h1>${text}&nbsp;<h2 id="status${index}"></h2></div>`;
+    }   
 
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
 }  
@@ -149,9 +167,21 @@ function addReceivedMessage(msg) {
 
     msg = msg.replaceAll("\n", "<br/>");
 
-    // msglist[index].innerHTML =  `<div class="chat-receiver chat-receiver--left"><h1>${sender}</h1><h2>${timestr}</h2>${msg}&nbsp;</div>`;     
-    msglist[index].innerHTML = `<div class="chat-receiver chat-receiver--left"><h1>${sender}</h1>${msg}&nbsp;</div>`;  
-
+    var length = msg.length;
+    console.log("length: ", length);
+    if(length < 10) {
+        msglist[index].innerHTML = `<div class="chat-receiver20 chat-receiver--left"><h1>${sender}</h1>${msg}&nbsp;</div>`;  
+    }
+    else if(length < 30) {
+        msglist[index].innerHTML = `<div class="chat-receiver40 chat-receiver--left"><h1>${sender}</h1>${msg}&nbsp;</div>`;  
+    }
+    else if(length < 150) {
+        msglist[index].innerHTML = `<div class="chat-receiver60 chat-receiver--left"><h1>${sender}</h1>${msg}&nbsp;</div>`;  
+    }
+    else {
+        msglist[index].innerHTML = `<div class="chat-receiver80 chat-receiver--left"><h1>${sender}</h1>${msg}&nbsp;</div>`;  
+    }
+     
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
 }
 
@@ -195,7 +225,7 @@ attachFile.addEventListener('click', function(){
                 contentType = 'text/csv'
             }
 
-            addSentMessageForSummary("uploading the selected document in order to summarize...");
+            addSentMessageForSummary("uploading the selected file in order to summerize...");
 
             const uri = "upload";
             const xhr = new XMLHttpRequest();
@@ -205,7 +235,7 @@ attachFile.addEventListener('click', function(){
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     response = JSON.parse(xhr.responseText);
                     console.log("response: " + JSON.stringify(response));
-                    
+                                        
                     // upload the file
                     const body = JSON.parse(response.body);
                     console.log('body: ', body);
@@ -216,22 +246,27 @@ attachFile.addEventListener('click', function(){
                     var xmlHttp = new XMLHttpRequest();
                     xmlHttp.open("PUT", uploadURL, true);       
 
+                    //let formData = new FormData();
+                    //formData.append("attachFile" , input.files[0]);
+                    //console.log('uploading file info: ', formData.get("attachFile"));
+
                     const blob = new Blob([input.files[0]], { type: contentType });
-                    
+
                     xmlHttp.onreadystatechange = function() {
                         if (xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status == 200 ) {
                             console.log(xmlHttp.responseText);
                                            
                             // summary for the upload file
-                            sendRequestForSummary(filename);                            
+                            sendRequestForSummary(filename);
                         }
                         else if(xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status != 200) {
                             console.log('status' + xmlHttp.status);
-                            alert("Try again! The request was failed.");                            
+                            alert("Try again! The request was failed.");
                         }
                     };
         
                     xmlHttp.send(blob); 
+                    // xmlHttp.send(formData); 
                     console.log(xmlHttp.responseText);
                 }
             };
@@ -242,7 +277,7 @@ attachFile.addEventListener('click', function(){
             }
             console.log("request: " + JSON.stringify(requestObj));
         
-            var blob = new Blob([JSON.stringify(requestObj)], {type: "application/json"});
+            var blob = new Blob([JSON.stringify(requestObj)], {type: 'application/json'});
         
             xhr.send(blob);       
         });
@@ -278,7 +313,7 @@ function sendRequest(text) {
             console.log("response: " + xhr.readyState + ', xhr.status: '+xhr.status);
         }
     };
-    
+
     var requestObj = {
         "user-id": userId,
         "request-id": requestId,
